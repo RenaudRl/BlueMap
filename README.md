@@ -1,74 +1,77 @@
-[![title-banner](https://bluecolored.de/paste/BluemapBanner.png)](https://bluemap.bluecolored.de/)
+# BlueMap
 
-<div align="center">
+![Java Version](https://img.shields.io/badge/Java-21-orange)
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![Target](https://img.shields.io/badge/Target-Folia%20/%20Paper%20/%20BTC--CORE-blue)
 
-create **3D**-maps of your Minecraft worlds and display them in your browser  
-**>> [DEMO MAP](https://bluecolored.de/bluemap) <<**
+**BlueMap** is a high-performance, strictly optimized fork of **BlueMap**, engineered specifically for the **BTC Studio** infrastructure. This fork drops support for legacy platforms (Spigot, Bukkit, older NMS, Fabric, Forge) to provide native, blazingly fast integration with **Paper** and **Folia**.
 
-
-[![GitHub issues](https://img.shields.io/github/issues-raw/BlueMap-Minecraft/BlueMap)](https://github.com/orgs/BlueMap-Minecraft/projects/2)
-[![GitHub all releases](https://img.shields.io/github/downloads/BlueMap-Minecraft/BlueMap/total)](https://github.com/BlueMap-Minecraft/BlueMap/releases)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/BlueMap-Minecraft/BlueMap)](https://github.com/BlueMap-Minecraft/BlueMap/releases/latest)
-[![Discord](https://img.shields.io/discord/665868367416131594?label=discord)](https://discord.gg/zmkyJa3)
-
-</div>
-
-<br>
-<br>
-
-## What is BlueMap
-BlueMap is a program that reads your Minecraft world files and generates not only a map, but also 3D-models of the whole surface.
-With the web-app you then can look at those in your browser and basically view the world as if you were ingame! 
-Or just look at it from far away to get an overview.
-
-[![screenshot](https://bluecolored.de/paste/BlueMapScreenshot.jpg?2)](https://bluecolored.de/bluemap)
-
-BlueMap comes as a Spigot/Paper or Sponge Plugin, as a Fabric or Forge-Mod and you can also use BlueMap without any Server
-from the Command-Line as a standalone tool.
-
-If installed as a Plugin/Mod, BlueMap **renders asynchronously** to your MinecraftServer-Thread. 
-This means at no time it will block your server-thread directly. 
-So as long as your CPU is not fully utilized, your server should not be slowed down while BlueMap is rendering.
-
-
-## Using BlueMap
-You can download BlueMap from [here](https://github.com/BlueMap-Minecraft/BlueMap/releases).  
-Read the [installation instructions](https://bluemap.bluecolored.de/wiki/getting-started/Installation.html) to get started!
-
-Here you can see how many servers are using BlueMap:
-
-[![BlueMap Graph](https://metrics.bluecolored.de/bluemap/graph.php?1)](https://metrics.bluecolored.de/)
-
-## Development
-### Clone
-If you have git installed, simply use the command `git clone --recursive https://github.com/BlueMap-Minecraft/BlueMap.git` to clone BlueMap.
-
-### Build
-In order to build BlueMap you simply need to run the `./gradlew release` command in BlueMap's root directory.
-You can find the compiled JAR files in `./build/release`.
-
-### Issues
-You found a bug, have another issue?  
-First, make sure it's not on your end, if you are unsure you can always ask about it in our [Discord](https://bluecolo.red/map-discord).  
-If you are sure it's a bug on BlueMap's end, please create an issue [here](https://github.com/BlueMap-Minecraft/BlueMap/issues)!
-
-### Contributing
-You are welcome to contribute!
-Just create a pull request with your changes :)
-
-**If you want to have your changes merged, make sure they are complete, documented and well tested!**
-
-Keep in mind that we have to maintain all new features and keep supporting them in the future.
-This means we always can decide to not accept a PR for any reason.
-
-## Links
-**TODO-List:** https://github.com/orgs/BlueMap-Minecraft/projects/2  
-**Wiki:** https://bluecolo.red/map-wiki  
-**Discord:** https://bluecolo.red/map-discord  
-**Reddit:** https://www.reddit.com/r/BlueMap  
+> [!WARNING]
+> **PLATFORM COMPATIBILITY NOTICE**
+> This fork is **STRICTLY** for Paper 1.21.11+ and Folia 1.21.11+. Legacy compatibility layers have been removed to maximize performance. If you are not running modern Paper/Folia, this plugin **will not function**.
 
 ---
 
-[![JetBrainsLogo](https://bluemap.bluecolored.de/assets/jetbrains.svg)](https://www.jetbrains.com/?from=BlueMap)<br>
-<br>
-Special thanks to [JetBrains](https://www.jetbrains.com/?from=BlueMap) for giving out an OpenSource-Licence for BlueMap development!
+## 🚀 Key Features in Detail
+
+### ⚡ Concurrency & Threading (Folia Native)
+- **Native Folia Support**: Deeply integrated with Folia's `RegionScheduler` and `GlobalRegionScheduler`. No main-thread blocking operations.
+- **Async Rendering**: Map updates happen asynchronously, respecting regionized threading rules to prevent server lag.
+- **Zero-Overhead Logic**: Removed unnecessary abstraction layers for non-compatible platforms.
+
+### 🎨 CraftEngine Integration
+- **Custom Block Support**: Natively renders `CraftEngine` furniture and custom blocks.
+- **Auto-Discovery**: Automatically parses CraftEngine configuration packs to resolve custom models.
+- **Zero-Config**: Works out of the box by scanning `plugins/CraftEngine`.
+
+### 🛠️ Core Optimisations & Debloating
+- **Java 21 Native**: Leveraging the latest JVM optimizations for maximum throughput and memory efficiency.
+- **Legacy Cleanup**: Removed support for Forge, Fabric, Sponge, and CLI to focus purely on the server plugin implementing.
+- **BTC Core Integration**: Native detection of BTC Core platform to enable specialized optimizations.
+
+### 🌍 Deployment & Startup
+- **Steamlined Loading**: Faster startup times through reduced library dependencies.
+- **Plug & Play**: Automatic threading context detection for both Paper and Folia environments.
+
+---
+
+## ⚙️ Configuration
+
+BlueMap is optimized out-of-the-box, but stays configurable via `core.conf` and `webapp.conf` in `plugins/BlueMap`.
+
+### Key Settings
+| File | Description |
+|-----|-------------|
+| `core.conf` | Core rendering settings, threading, data storage. |
+| `webapp.conf` | Webserver settings, port, external webroot. |
+
+### CraftEngine Support
+No manual configuration needed. The plugin automatically detects configurations in `plugins/CraftEngine/packs` or `plugins/CraftEngine`.
+
+---
+
+## 🛠 Building & Deployment
+
+Requires **Java 21**.
+
+```bash
+# Clean and compile the project
+./gradlew clean build
+```
+
+The resulting artifact will be in `implementations/paper/build/libs/`.
+
+---
+
+## 🤝 Credits & Inspiration
+This project is built upon the innovation of the broader Minecraft development community:
+- **[BlueMap](https://github.com/BlueMap-Minecraft/BlueMap)** - The original project.
+
+---
+
+## 📜 License
+- **Custom BTC-CORE Patches**: Proprietary to **BTC Studio**.
+- **Upstream Source**: Original licenses apply to their respective components from BlueMap (MIT).
+
+---
+**Fork maintained by BTCSTUDIO**

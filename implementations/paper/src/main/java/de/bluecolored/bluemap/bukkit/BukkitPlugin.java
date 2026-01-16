@@ -136,6 +136,10 @@ public class BukkitPlugin extends JavaPlugin implements Server, Listener {
         new Thread(() -> {
             try {
                 Logger.global.logInfo("Loading...");
+                
+                // Load CraftEngine registry
+                de.bluecolored.bluemap.core.resources.CraftEngineRegistry.load(getDataFolder().toPath().getParent());
+                
                 this.pluginInstance.load();
                 if (pluginInstance.isLoaded()) Logger.global.logInfo("Loaded!");
             } catch (IOException | RuntimeException e) {
