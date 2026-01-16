@@ -11,6 +11,7 @@ dependencies {
     api ( libs.commons.dbcp2 )
     api ( libs.configurate.hocon )
     api ( libs.configurate.gson )
+    api ( libs.configurate.yaml )
     api ( libs.lz4 )
 }
 
