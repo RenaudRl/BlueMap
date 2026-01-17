@@ -68,7 +68,7 @@ public class ItemDisplayEntity extends MCAEntity {
     public static class ItemComponents {
         @NBTName("minecraft:item_model")
         private String itemModel;
-        
+
         @NBTName("minecraft:custom_model_data")
         private CustomModelData customModelData;
     }
@@ -79,7 +79,7 @@ public class ItemDisplayEntity extends MCAEntity {
     public static class CustomModelData {
         @NBTName("strings")
         private java.util.List<String> strings;
-        
+
         @NBTName("floats")
         private java.util.List<Float> floats;
     }
@@ -90,13 +90,13 @@ public class ItemDisplayEntity extends MCAEntity {
     public static class Transformation {
         @NBTName("translation")
         private float[] translation;
-        
+
         @NBTName("scale")
         private float[] scale;
-        
+
         @NBTName("left_rotation")
         private float[] leftRotation;
-        
+
         @NBTName("right_rotation")
         private float[] rightRotation;
 

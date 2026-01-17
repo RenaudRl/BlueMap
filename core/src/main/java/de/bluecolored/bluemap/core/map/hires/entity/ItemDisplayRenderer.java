@@ -97,7 +97,7 @@ public class ItemDisplayRenderer implements EntityRenderer {
 
         if (craftEngineFurnitureId != null) {
             modelPath = CraftEngineRegistry.getModel(craftEngineFurnitureId);
-            
+
             if (modelPath == null) {
                 modelPath = resolveCraftEngineModelPath(craftEngineFurnitureId);
             }

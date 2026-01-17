@@ -53,7 +53,7 @@ public class CraftEngineRegistry {
      */
     public static synchronized void load(Path pluginsDir) {
         if (initialized || pluginsDir == null || !Files.exists(pluginsDir)) return;
-        
+
         Path craftEngineDir = pluginsDir.resolve("CraftEngine/packs");
         if (!Files.exists(craftEngineDir)) {
              // Fallback to simpler path if structure differs
@@ -73,7 +73,7 @@ public class CraftEngineRegistry {
         } catch (IOException e) {
             Logger.global.logError("Failed to walk CraftEngine directories", e);
         }
-        
+
         initialized = true;
     }
 
@@ -86,12 +86,12 @@ public class CraftEngineRegistry {
 
             // CraftEngine 3.x / 4.x structure often puts items/blocks under "items" or "blocks"
             // We are looking for "model.path" or "items.<id>.model.path"
-            
+
             // Check "items" section
             if (!root.node("items").virtual()) {
                 parseSection(root.node("items"));
             }
-            
+
             // Check "blocks" section
             if (!root.node("blocks").virtual()) {
                 parseSection(root.node("blocks"));
@@ -106,7 +106,7 @@ public class CraftEngineRegistry {
         for (Map.Entry<Object, ? extends ConfigurationNode> entry : section.childrenMap().entrySet()) {
             String id = entry.getKey().toString();
             ConfigurationNode node = entry.getValue();
-            
+
             // Look for model path
             // Structure: model -> path: minecraft:block/custom/xxx
             ConfigurationNode modelNode = node.node("model");
@@ -123,12 +123,12 @@ public class CraftEngineRegistry {
     private static void register(String id, String modelPath) {
         // ID format: default:chair or craftengine:chair
         // Model path: minecraft:block/custom/chair
-        
+
         ResourcePath<Model> resourcePath = new ResourcePath<>(modelPath);
         MODEL_MAPPING.put(id, resourcePath);
         Logger.global.logDebug("Registered CraftEngine model: " + id + " -> " + modelPath);
     }
-    
+
     public static ResourcePath<Model> getModel(String furnitureId) {
         return MODEL_MAPPING.get(furnitureId);
     }
