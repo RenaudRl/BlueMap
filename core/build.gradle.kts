@@ -13,17 +13,6 @@ dependencies {
     api ( libs.configurate.gson )
     api ( libs.configurate.yaml )
     api ( libs.lz4 )
-
-    compileOnly ( libs.jetbrains.annotations )
-    compileOnly ( libs.lombok )
-
-    annotationProcessor ( libs.lombok )
-
-    // tests
-    testImplementation ( libs.junit.core )
-    testRuntimeOnly ( libs.junit.engine )
-    testRuntimeOnly ( libs.lombok )
-    testAnnotationProcessor ( libs.lombok )
 }
 
 tasks.register("zipResourceExtensions", type = Zip::class) {
