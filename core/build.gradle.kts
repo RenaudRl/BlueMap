@@ -13,6 +13,8 @@ dependencies {
     api ( libs.configurate.gson )
     api ( libs.configurate.yaml )
     api ( libs.lz4 )
+
+    compileOnly ( "net.momirealms:craft-engine-bukkit:0.0.67" )
 }
 
 tasks.register("zipResourceExtensions", type = Zip::class) {
