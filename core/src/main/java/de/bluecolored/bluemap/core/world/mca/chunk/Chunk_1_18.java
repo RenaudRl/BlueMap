@@ -25,6 +25,7 @@
 package de.bluecolored.bluemap.core.world.mca.chunk;
 
 import de.bluecolored.bluemap.core.logger.Logger;
+import de.bluecolored.bluemap.core.resources.CraftEngineChunkData;
 import de.bluecolored.bluemap.core.util.Key;
 import de.bluecolored.bluemap.core.world.BlockState;
 import de.bluecolored.bluemap.core.world.DimensionType;
@@ -66,8 +67,15 @@ public class Chunk_1_18 extends MCAChunk {
 
     private final Map<Long, BlockEntity> blockEntities;
 
+    @Nullable
+    private final CraftEngineChunkData craftEngineData;
+
     public Chunk_1_18(MCAWorld world, Data data) {
         super(world, data);
+
+        this.craftEngineData = data.bukkitValues != null
+                ? CraftEngineChunkData.parse(data.bukkitValues.craftEngineChunkData)
+                : null;
 
         this.generated = !STATUS_EMPTY.equals(data.status);
         this.hasLightData = STATUS_FULL.equals(data.status);
@@ -150,6 +158,11 @@ public class Chunk_1_18 extends MCAChunk {
         if (section == null) return BlockState.AIR;
 
         return section.getBlockState(x, y, z);
+    }
+
+    @Override
+    public @Nullable String getCraftEngineBlockId(int x, int y, int z) {
+        return craftEngineData != null ? craftEngineData.getBlockId(x, y, z) : null;
     }
 
     @Override
@@ -308,6 +321,18 @@ public class Chunk_1_18 extends MCAChunk {
 
         @NBTDeserializer(LenientBlockEntityArrayDeserializer.class)
         private @Nullable BlockEntity [] blockEntities = EMPTY_BLOCK_ENTITIES_ARRAY;
+
+        @NBTName("ChunkBukkitValues")
+        private @Nullable BukkitValuesData bukkitValues = null;
+
+    }
+
+    @Getter
+    @SuppressWarnings("FieldMayBeFinal")
+    public static class BukkitValuesData {
+
+        @NBTName("craftengine:chunk_data")
+        private byte @Nullable [] craftEngineChunkData = null;
 
     }
 

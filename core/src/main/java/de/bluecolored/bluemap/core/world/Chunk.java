@@ -50,6 +50,15 @@ public interface Chunk {
         return BlockState.AIR;
     }
 
+    /**
+     * @return the CraftEngine custom-block id at the given chunk-local coordinates, or {@code null}
+     *         when this position has no CraftEngine custom block (the default for all chunk types
+     *         except those that carry a {@code craftengine:chunk_data} PDC).
+     */
+    default @Nullable String getCraftEngineBlockId(int x, int y, int z) {
+        return null;
+    }
+
     default LightData getLightData(int x, int y, int z, LightData target) {
         return target.set(0, 0);
     }
