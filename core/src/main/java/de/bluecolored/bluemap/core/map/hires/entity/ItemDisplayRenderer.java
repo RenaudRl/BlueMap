@@ -39,6 +39,7 @@ import de.bluecolored.bluemap.core.resources.pack.resourcepack.model.Face;
 import de.bluecolored.bluemap.core.resources.pack.resourcepack.model.Model;
 import de.bluecolored.bluemap.core.resources.pack.resourcepack.texture.Texture;
 import de.bluecolored.bluemap.core.util.Direction;
+import de.bluecolored.bluemap.core.util.Key;
 import de.bluecolored.bluemap.core.util.math.Color;
 import de.bluecolored.bluemap.core.util.math.MatrixM4f;
 import de.bluecolored.bluemap.core.util.math.VectorM2f;
@@ -58,7 +59,7 @@ public class ItemDisplayRenderer implements EntityRenderer {
     @Getter
     private final ResourcePack resourcePack;
     @Getter
-    private final Function<ResourcePath<Model>, Model> modelProvider;
+    private final Function<Key, Model> modelProvider;
     @Getter
     private final TextureGallery textureGallery;
     @Getter
