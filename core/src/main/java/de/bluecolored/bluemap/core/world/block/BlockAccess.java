@@ -47,6 +47,14 @@ public interface BlockAccess {
     Biome getBiome();
     @Nullable BlockEntity getBlockEntity();
 
+    /**
+     * @return the CraftEngine custom-block id at this position, or {@code null} if this position
+     *         has no CraftEngine custom block (see {@link de.bluecolored.bluemap.core.world.Chunk#getCraftEngineBlockId}).
+     */
+    default @Nullable String getCraftEngineBlockId() {
+        return null;
+    }
+
     boolean hasOceanFloorY();
     int getOceanFloorY();
 

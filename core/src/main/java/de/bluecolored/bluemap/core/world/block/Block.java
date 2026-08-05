@@ -84,6 +84,11 @@ public class Block implements BlockAccess {
     }
 
     @Override
+    public @Nullable String getCraftEngineBlockId() {
+        return getChunk().getCraftEngineBlockId(x, y, z);
+    }
+
+    @Override
     public LightData getLightData() {
         if (lightData.getSkyLight() < 0) getChunk().getLightData(x, y, z, lightData);
         return lightData;

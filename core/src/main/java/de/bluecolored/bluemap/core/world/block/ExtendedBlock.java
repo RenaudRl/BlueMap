@@ -121,6 +121,11 @@ public class ExtendedBlock implements BlockAccess {
     }
 
     @Override
+    public @Nullable String getCraftEngineBlockId() {
+        return blockAccess.getCraftEngineBlockId();
+    }
+
+    @Override
     public boolean hasOceanFloorY() {
         return blockAccess.hasOceanFloorY();
     }

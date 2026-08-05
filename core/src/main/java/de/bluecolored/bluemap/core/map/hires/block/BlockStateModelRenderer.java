@@ -28,8 +28,11 @@ import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.bluecolored.bluemap.core.map.TextureGallery;
 import de.bluecolored.bluemap.core.map.hires.RenderSettings;
 import de.bluecolored.bluemap.core.map.hires.TileModelView;
+import de.bluecolored.bluemap.core.resources.CraftEngineRegistry;
+import de.bluecolored.bluemap.core.resources.ResourcePath;
 import de.bluecolored.bluemap.core.resources.pack.resourcepack.ResourcePack;
 import de.bluecolored.bluemap.core.resources.pack.resourcepack.blockstate.Variant;
+import de.bluecolored.bluemap.core.resources.pack.resourcepack.model.Model;
 import de.bluecolored.bluemap.core.util.Caches;
 import de.bluecolored.bluemap.core.util.math.Color;
 import de.bluecolored.bluemap.core.world.BlockState;
@@ -79,6 +82,28 @@ public class BlockStateModelRenderer {
     private final Color variantColor = new Color();
     private void renderModel(BlockNeighborhood block, BlockState blockState, TileModelView tileModel, Color blockColor) {
         int modelStart = tileModel.getStart();
+
+        // CraftEngine custom blocks replace the vanilla appearance of their carrier block entirely
+        // (e.g. a note_block used as CraftEngine's storage block should never show as a note_block).
+        String craftEngineBlockId = block.getCraftEngineBlockId();
+        if (craftEngineBlockId != null) {
+            ResourcePath<Model> craftEngineModel = CraftEngineRegistry.getModel(craftEngineBlockId);
+            if (craftEngineModel != null) {
+                variantColor.set(0f, 0f, 0f, 0f, true);
+                Variant craftEngineVariant = new Variant(craftEngineModel);
+                blockRenderers.get(craftEngineVariant.getRenderer())
+                        .render(block, craftEngineVariant, tileModel.initialize(), variantColor);
+
+                blockColor.add(variantColor.premultiplied());
+                if (blockColor.a > 0) {
+                    blockColor.flatten().straight();
+                    blockColor.a = variantColor.a;
+                }
+
+                tileModel.initialize(modelStart);
+                return;
+            }
+        }
 
         var stateResource = resourcePack.getBlockState(blockState);
         if (stateResource == null) return;
