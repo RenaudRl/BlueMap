@@ -142,8 +142,10 @@ public final class WorldRegionUpdateTask implements MapRenderTask, SerializableR
         if (tileRenderCount >= tileMaxCount * 0.75)
             map.getWorld().preloadRegionChunks(regionPos.getX(), regionPos.getY());
 
-        if (tileRenderCount + tileDeleteCount == 0)
+        if (tileRenderCount + tileDeleteCount == 0) {
             completed = true;
+            complete();
+        }
 
     }
 
@@ -255,8 +257,8 @@ public final class WorldRegionUpdateTask implements MapRenderTask, SerializableR
         // clear tile-actions
         tileActions = null;
 
-        // save map (at most, every minute)
-        map.save(TimeUnit.MINUTES.toMillis(1));
+        // save map (at most, every 15 seconds)
+        map.save(TimeUnit.SECONDS.toMillis(15));
     }
 
     @Override

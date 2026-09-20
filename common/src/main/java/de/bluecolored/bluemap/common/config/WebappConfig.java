@@ -29,6 +29,7 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -64,8 +65,10 @@ public class WebappConfig {
     private String mapDataRoot = "maps";
     private String liveDataRoot = "maps";
 
-    private Set<String> scripts = new HashSet<>();
-    private Set<String> styles = new HashSet<>();
+    private boolean clientDecompression = false;
+
+    private LinkedHashSet<String> scripts = new LinkedHashSet<>();
+    private LinkedHashSet<String> styles = new LinkedHashSet<>();
 
     public Optional<String> getStartLocation() {
         return Optional.ofNullable(startLocation);

@@ -32,6 +32,7 @@ import de.bluecolored.bluemap.common.addons.AddonLoader;
 import de.bluecolored.bluemap.common.api.BlueMapAPIImpl;
 import de.bluecolored.bluemap.common.commands.TextFormat;
 import de.bluecolored.bluemap.common.config.*;
+import de.bluecolored.bluemap.common.live.LiveMarkersDataSupplier;
 import de.bluecolored.bluemap.common.metrics.Metrics;
 import de.bluecolored.bluemap.common.plugin.MapUpdateService;
 import de.bluecolored.bluemap.common.rendermanager.MapUpdatePreparationTask;
@@ -103,7 +104,14 @@ public class BlueMapCLI {
         if (watch) {
             for (BmMap map : maps.values()) {
                 try {
-                    MapUpdateService watcher = new MapUpdateService(renderManager, map, blueMap.getConfig().getCoreConfig().getUpdateCooldown(), true);
+                    MapUpdateService watcher = new MapUpdateService(
+                            renderManager,
+                            map,
+                            Instant.now(),
+                            blueMap.getConfig().getCoreConfig().getFullUpdateInterval(),
+                            blueMap.getConfig().getCoreConfig().getUpdateCooldown(),
+                            true
+                    );
                     watcher.start();
                     mapUpdateServices.add(watcher);
                 } catch (IOException ex) {
@@ -178,23 +186,6 @@ public class BlueMapCLI {
         };
         timer.scheduleAtFixedRate(saveTask, TimeUnit.MINUTES.toMillis(2), TimeUnit.MINUTES.toMillis(2));
 
-        if (watch) {
-            long fullUpdateInterval = blueMap.getConfig().getCoreConfig().getFullUpdateInterval().toMillis();
-            if (fullUpdateInterval > 0) {
-                TimerTask updateAllMapsTask = new TimerTask() {
-                    @Override
-                    public void run() {
-                        Logger.global.logInfo("Start updating " + maps.size() + " maps ...");
-                        renderManager.scheduleRenderTasksNext(maps.values().stream()
-                                .sorted(Comparator.comparing(bmMap -> bmMap.getMapSettings().getSorting()))
-                                .map(map -> MapUpdatePreparationTask.updateMap(map, renderManager))
-                                .toArray(RenderTask[]::new));
-                    }
-                };
-                timer.scheduleAtFixedRate(updateAllMapsTask, fullUpdateInterval, fullUpdateInterval);
-            }
-        }
-
         Runnable shutdown = () -> {
             Logger.global.logInfo("Stopping...");
             api.unregister();
@@ -238,15 +229,20 @@ public class BlueMapCLI {
         );
 
         // wait until done, then shutdown if not watching
-        renderManager.awaitIdle();
-        if (shutdownInProgress) return;
+        Thread.ofPlatform().name("BlueMap-CLI-Render").start(() -> {
+            try {
+                renderManager.awaitIdle();
+            } catch (InterruptedException ignore) {}
 
-        Logger.global.logInfo("Your maps are now all up-to-date!");
+            if (shutdownInProgress) return;
 
-        if (!watch) {
-            Runtime.getRuntime().removeShutdownHook(shutdownHook);
-            shutdown.run();
-        }
+            Logger.global.logInfo("Your maps are now all up-to-date!");
+
+            if (!watch) {
+                Runtime.getRuntime().removeShutdownHook(shutdownHook);
+                shutdown.run();
+            }
+        });
     }
 
     public void updateMarkers(BlueMapService blueMap, @Nullable String mapsToUpdate) {
@@ -292,11 +288,16 @@ public class BlueMapCLI {
         for (var mapConfigEntry : blueMap.getConfig().getMapConfigs().entrySet()) {
             MapStorage storage = blueMap.getOrLoadStorage(mapConfigEntry.getValue().getStorage())
                     .map(mapConfigEntry.getKey());
+            BmMap map = blueMap.getMaps().get(mapConfigEntry.getKey());
+
+            MapRequestHandler mapRequestHandler = map != null ?
+                    new MapRequestHandler(map, null, new LiveMarkersDataSupplier(map.getMarkerSets()), config.isSseEnabled()) :
+                    new MapRequestHandler(storage);
 
             routingRequestHandler.register(
                     "maps/" + Pattern.quote(mapConfigEntry.getKey()) + "/(.*)",
                     "$1",
-                    new MapRequestHandler(storage)
+                    mapRequestHandler
             );
         }
 
@@ -310,7 +311,7 @@ public class BlueMapCLI {
             ));
         }
 
-        HttpRequestHandler handler = new BlueMapResponseModifier(routingRequestHandler);
+        HttpRequestHandler handler = new BlueMapResponseModifier(routingRequestHandler, config.getAdditionalHeaders());
         handler = new LoggingRequestHandler(
                 handler,
                 config.getLog().getFormat(),
@@ -418,13 +419,6 @@ public class BlueMapCLI {
             blueMap = new BlueMapService(configs);
             boolean noActions = true;
 
-            if (cmd.hasOption("w")) {
-                noActions = false;
-
-                cli.startWebserver(blueMap, cmd.hasOption("b"));
-                Thread.sleep(1000); //wait a second to let the webserver start, looks nicer in the log if anything comes after that
-            }
-
             if (cmd.hasOption("r") || cmd.hasOption("f") || cmd.hasOption("u") || cmd.hasOption("e")) {
                 noActions = false;
 
@@ -433,12 +427,12 @@ public class BlueMapCLI {
                 if (cmd.hasOption("f")) force = TileUpdateStrategy.FORCE_ALL;
                 else if (cmd.hasOption("e")) force = TileUpdateStrategy.FORCE_EDGE;
                 boolean generateWebappFiles = cmd.hasOption("g");
-                String mapsToRender = cmd.getOptionValue("m", null);
+                String mapsToRender = cmd.getOptionValue("m", (String) null);
                 cli.renderMaps(blueMap, watch, force, generateWebappFiles, mapsToRender);
             } else {
                 if (cmd.hasOption("markers")) {
                     noActions = false;
-                    String mapsToUpdate = cmd.getOptionValue("m", null);
+                    String mapsToUpdate = cmd.getOptionValue("m", (String) null);
                     cli.updateMarkers(blueMap, mapsToUpdate);
                 }
                 if (cmd.hasOption("g")) {
@@ -449,6 +443,11 @@ public class BlueMapCLI {
                     noActions = false;
                     blueMap.createOrUpdateWebApp(false);
                 }
+            }
+
+            if (cmd.hasOption("w")) {
+                noActions = false;
+                cli.startWebserver(blueMap, cmd.hasOption("b"));
             }
 
             // if nothing has been defined to do

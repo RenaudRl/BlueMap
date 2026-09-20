@@ -6,7 +6,8 @@ plugins {
 
 val supportedMinecraftVersions = listOf(
     "26.1.1", "26.1.2",
-    "26.2"
+    "26.2",
+    "26.3"
 )
 
 val apiVersion = "26.1.1" // paper-version but without minor
@@ -16,6 +17,7 @@ dependencies {
     api ( project( ":common" ) ) {
         exclude( group = "com.google.code.gson", module = "gson" )
         exclude( group = "net.kyori", module = "adventure-api" )
+        exclude( group = "net.kyori", module = "option" )
     }
 
     shadow ("io.papermc.paper:paper-api:$paperVersion")
@@ -53,6 +55,11 @@ tasks.shadowJar {
 
     // bstats
     relocate ("org.bstats", "de.bluecolored.shadow.bstats")
+
+    // not correctly relocated and not needed -> exclude
+    exclude(
+        "META-INF/services/org.spongepowered.configurate*"
+    )
 
 }
 

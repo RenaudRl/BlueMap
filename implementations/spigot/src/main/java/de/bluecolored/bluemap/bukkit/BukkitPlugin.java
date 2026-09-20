@@ -34,9 +34,13 @@ import de.bluecolored.bluemap.core.logger.JavaLogger;
 import de.bluecolored.bluemap.core.logger.Logger;
 import de.bluecolored.bluemap.core.util.Caches;
 import de.bluecolored.bluemap.core.util.Key;
+import de.bluecolored.bluemap.core.world.BlockState;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.defaults.BukkitCommand;
 import org.bukkit.event.EventHandler;
@@ -72,6 +76,16 @@ public class BukkitPlugin extends JavaPlugin implements Server, Listener {
     public BukkitPlugin() {
         Logger.global.clear();
         Logger.global.put(new JavaLogger(getLogger()));
+
+        //check for paper-api and warn
+        if (isPaper()) {
+            Logger.global.logWarning("""
+                This seems to be a PAPER-based server, but you are using the SPIGOT version of BlueMap.
+                Things will likely not work correctly!
+                Consider switching to BlueMap's paper version:
+                https://modrinth.com/plugin/bluemap/versions?l=paper
+                """.strip());
+        }
 
         //try to get best matching minecraft-version
         String version = null;
@@ -109,7 +123,7 @@ public class BukkitPlugin extends JavaPlugin implements Server, Listener {
     public void onEnable() {
 
         //save world so the level.dat is present on new worlds
-        Logger.global.logInfo("Saving all worlds once, to make sure the level.dat is present...");
+        Logger.global.logInfo("Saving all worlds once, to make sure all required world-properties are present...");
         for (World world : getServer().getWorlds()) {
             world.save();
         }
@@ -262,6 +276,26 @@ public class BukkitPlugin extends JavaPlugin implements Server, Listener {
         return onlinePlayerMap;
     }
 
+    @Override
+    public Map<Key, BlockState> getDefaultBlockstates() {
+        Map<Key, BlockState> blockstates = new HashMap<>();
+        for (Material material : Material.values()) {
+            if (material.isLegacy() || !material.isBlock()) continue;
+
+            try {
+                BlockData blockData = material.createBlockData();
+                NamespacedKey materialKey = material.getKey();
+                blockstates.put(
+                        new Key(materialKey.getNamespace(), materialKey.getKey()),
+                        BlockState.fromString(blockData.getAsString())
+                );
+            } catch (RuntimeException ex) {
+                Logger.global.logDebug("Failed to get the default blockstate for material '" + material + "': " + ex);
+            }
+        }
+        return blockstates;
+    }
+
     /**
      * Only update some of the online players each tick to minimize performance impact on the server-thread.
      * Only call this method on the server-thread.
@@ -282,6 +316,15 @@ public class BukkitPlugin extends JavaPlugin implements Server, Listener {
                     onlinePlayerList.get(playerUpdateIndex).update();
                 }
             }
+        }
+    }
+
+    private static boolean isPaper() {
+        try {
+            Class.forName("io.papermc.paper.plugin.loader.PluginLoader");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
         }
     }
 
