@@ -40,6 +40,7 @@ import de.bluecolored.bluemap.core.world.block.BlockNeighborhood;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class BlockStateModelRenderer {
 
@@ -47,6 +48,7 @@ public class BlockStateModelRenderer {
     private final LoadingCache<BlockRendererType, BlockRenderer> blockRenderers;
 
     private final List<Variant> variants = new ArrayList<>();
+    private final Consumer<Variant> addVariant = variants::add;
 
     public BlockStateModelRenderer(ResourcePack resourcePack, TextureGallery textureGallery, RenderSettings renderSettings) {
         this.resourcePack = resourcePack;
@@ -110,7 +112,7 @@ public class BlockStateModelRenderer {
 
         float blockColorOpacity = 0;
         variants.clear();
-        stateResource.forEach(blockState, block.getX(), block.getY(), block.getZ(), variants::add);
+        stateResource.forEach(blockState, block.getX(), block.getY(), block.getZ(), addVariant);
 
         //noinspection ForLoopReplaceableByForEach
         for (int i = 0; i < variants.size(); i++) {

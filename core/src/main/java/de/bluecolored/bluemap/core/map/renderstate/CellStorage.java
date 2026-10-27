@@ -25,9 +25,11 @@
 package de.bluecolored.bluemap.core.map.renderstate;
 
 import com.flowpowered.math.vector.Vector2i;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import de.bluecolored.bluemap.core.logger.Logger;
 import de.bluecolored.bluemap.core.storage.GridStorage;
 import de.bluecolored.bluemap.core.storage.compression.CompressedInputStream;
+import de.bluecolored.bluemap.core.util.Caches;
 import de.bluecolored.bluemap.core.util.Key;
 import de.bluecolored.bluemap.core.util.nbt.PalettedArrayAdapter;
 import de.bluecolored.bluemap.core.util.nbt.RegistryAdapter;
@@ -36,9 +38,12 @@ import de.bluecolored.bluenbt.TypeToken;
 import lombok.Getter;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 abstract class CellStorage<T extends CellStorage.Cell> {
 
@@ -65,6 +70,13 @@ abstract class CellStorage<T extends CellStorage.Cell> {
         }
     };
 
+    private final LoadingCache<Vector2i, T> cellCache = Caches.with()
+            .softValues()
+            .maximumSize(10240)
+            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .expireAfterAccess(1, TimeUnit.MINUTES)
+            .build(this::loadCell);
+
     public CellStorage(GridStorage storage, Class<T> type) {
         this.storage = storage;
         this.type = type;
@@ -76,6 +88,7 @@ abstract class CellStorage<T extends CellStorage.Cell> {
 
     public synchronized void reset() {
         cells.clear();
+        cellCache.invalidateAll();
     }
 
     T cell(int x, int z) {
@@ -83,20 +96,25 @@ abstract class CellStorage<T extends CellStorage.Cell> {
     }
 
     synchronized T cell(Vector2i pos) {
-        return cells.computeIfAbsent(pos, this::loadCell);
+        return cells.computeIfAbsent(pos, cellCache::get);
     }
 
     void forEach(CellConsumer<T> consumer) throws IOException {
-        storage.stream().forEach(sc -> {
-            Vector2i cellPos = new Vector2i(sc.getX(), sc.getZ());
-            consumer.accept(cellPos, cell(cellPos));
-        });
+        try (Stream<GridStorage.Cell> storageCells = storage.stream()) {
+            storageCells.forEach(sc -> {
+                Vector2i cellPos = new Vector2i(sc.getX(), sc.getZ());
+                consumer.accept(cellPos, cell(cellPos));
+            });
+        }
     }
 
     private synchronized T loadCell(Vector2i pos) {
-        try (CompressedInputStream in = storage.read(pos.getX(), pos.getY())) {
-            if (in != null)
-                return BLUE_NBT.read(in.decompress(), type);
+        try (CompressedInputStream compressedIn = storage.read(pos.getX(), pos.getY())) {
+            if (compressedIn != null) {
+                try (InputStream in = compressedIn.decompress()) {
+                    return BLUE_NBT.read(in, type);
+                }
+            }
         } catch (IOException ex) {
             Logger.global.logError("Failed to load render-state cell " + pos, ex);
         } catch (RuntimeException ex) { // E.g. NoSuchElementException thrown by BlueNBT if there is a format error
@@ -117,15 +135,21 @@ abstract class CellStorage<T extends CellStorage.Cell> {
 
     private synchronized void saveCell(Vector2i pos, T cell) {
         if (!cell.isModified()) return;
-        try (OutputStream in = storage.write(pos.getX(), pos.getY())) {
-            BLUE_NBT.write(cell, in, type);
+        cell.setModified(false);
+        try {
+            storage.write(pos.getX(), pos.getY(), (OutputStream out) -> BLUE_NBT.write(cell, out, type));
         } catch (IOException ex) {
+            cell.setModified(true);
             Logger.global.logError("Failed to save render-state cell " + pos, ex);
         }
     }
 
     public interface Cell {
+
         boolean isModified();
+
+        void setModified(boolean modified);
+
     }
 
     @FunctionalInterface
