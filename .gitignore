@@ -35929,3 +35929,6 @@ Docs/betterhud api.txt
 Docs/advancedslimepaper api.txt
 
 btc_b3.log
+
+# internal agent rules
+.agent/
